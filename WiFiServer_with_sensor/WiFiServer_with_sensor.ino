@@ -1,24 +1,24 @@
 #include <ESP8266WiFi.h>
-#include "DHT.h"          // biblioteka DHT
-#define DHTPIN 2          // numer pinu sygnałowego
-#define DHTTYPE DHT11     // typ czujnika (DHT11). Jesli posiadamy DHT22 wybieramy DHT22
- 
-DHT dht(DHTPIN, DHTTYPE); // definicja czujnika
-bool receiving = false;
-const char* ssid = "vnet-1E72A2";
-const char* password = "ETUOHZYK8WINRB3X";
- 
-int ledPin = 13; // GPIO13
+#include "DHT.h"         
+#include "time.h"
+#define DHTTYPE DHT11
+
+const int DHTPin = 5; // D1
+const int ledPin = 13; // D7
+const char* ssid = "Dom";
+const char* password = "Monikasu123456";
+float t [1] = {};
+float h [1] ={};
+DHT dht(DHTPin, DHTTYPE);
 WiFiServer server(80);
- 
+
 void setup() {
   Serial.begin(115200);
+  dht.begin();
   delay(10);
- 
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
- 
-  // Connect to WiFi network
+  
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
@@ -46,39 +46,31 @@ void setup() {
 }
  
 void loop() {
-   // Odczyt temperatury i wilgotności powietrza
-  float t = dht.readTemperature();
-  float h = dht.readHumidity();
- 
-  // Sprawdzamy czy są odczytane wartości
-//if (isnan(t) || isnan(h))
-  //{
-    // Jeśli nie, wyświetlamy informację o błędzie
-   // Serial.println("Blad odczytu danych z czujnika");
- //   loop();
- // } else
-//  {
-    
-  //}
+  float te = dht.readTemperature();
+  float hu = dht.readHumidity();
   
-  // Check if a client has connected
+  if (isnan(te) || isnan(hu)) {
+    Serial.println(" No Data comin :( ");
+    delay(50);
+  } else {
+    t[0] = te;
+    h[0] = hu;
+    Serial.println(" Receiving Data!");
+  }
+  
   WiFiClient client = server.available();
   if (!client) {
     return;
   }
  
-  // Wait until the client sends some data
   Serial.println("new client");
   while(!client.available()){
     delay(1);
   }
- 
-  // Read the first line of the request
+  
   String request = client.readStringUntil('\r');
   Serial.println(request);
   client.flush();
- 
-  // Match the request
  
   int value = LOW;
   if (request.indexOf("/LED=ON") != -1)  {
@@ -89,39 +81,36 @@ void loop() {
     digitalWrite(ledPin, LOW);
     value = LOW;
   }
- 
-// Set ledPin according to the request
-//digitalWrite(ledPin, value);
- 
-  // Return the response
+  if (request.indexOf("/REFRESH") != -1) {
+  }
+  
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.println(""); //  do not forget this one
   client.println("<!DOCTYPE HTML>");
   client.println("<html>");
- 
+  
   client.print("Led pin is now: ");
- 
+  
   if(value == HIGH) {
     client.print("On");
   } else {
     client.print("Off");
-  }
-  client.println("<br><br>");
+  };
+  
+  client.println("<br>");
   client.println("<a href=\"/LED=ON\"\"><button>Turn On </button></a>");
   client.println("<a href=\"/LED=OFF\"\"><button>Turn Off </button></a><br />"); 
-  if (receiving){
-  client.println("Temperature: ");
-  client.print(t);
-  client.print("*C");
-  client.println("Humidity: ");
-  client.print(h);
-  client.print(" % ");
+  
+  client.println("<br>Temperature: ");
+  client.print(t[0]);
+  client.print("*C</br>");
+  client.println("<br>Humidity: ");
+  client.print(h[0]);
+  client.print(" %   </br");
+  client.println("<br><a href=\"/REFRESH\"\"><button>Refresh</button></a><br />");
   client.println("</html>");
-  } else{
-    client.println("Brak Odczytu");
-  }
- 
+  
   delay(1);
   Serial.println("Client disonnected");
   Serial.println("");

@@ -1,14 +1,11 @@
 #include "DHT.h"          // biblioteka DHT
- 
-#define DHTPIN 2          // numer pinu sygnałowego
-#define DHTTYPE DHT11     // typ czujnika (DHT11). Jesli posiadamy DHT22 wybieramy DHT22
- 
-DHT dht(DHTPIN, DHTTYPE); // definicja czujnika
- 
+#define DHTTYPE DHT11         
+const int DHTPin = 5;
+DHT dht(DHTPin, DHTTYPE);
 void setup()
 {
-  Serial.begin(9600);     // otworzenie portu szeregowego
-  dht.begin();            // inicjalizacja czujnika
+  Serial.begin(115200);     // otworzenie portu szeregowego
+  dht.begin();         // inicjalizacja czujnika
 }
  
 void loop()
